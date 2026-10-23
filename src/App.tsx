@@ -27,12 +27,18 @@ export function App() {
     toggleMusic,
     toggleMute,
     setVolume,
+    startMusic,
   } = useAudioEngine();
 
   const { jumpToScene } = useScrollJourney(reducedMotion);
 
   // When guest clicks "Enter Reception Story" in Scene 1
   const handleEnterStory = () => {
+    // Immediately initiate music playback on explicit user action
+    if (!isPlaying) {
+      startMusic();
+    }
+
     // Trigger subtle golden/rose petal burst
     confetti({
       particleCount: 30,

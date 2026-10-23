@@ -124,6 +124,6 @@ export const WEDDING_CONFIG: WeddingConfig = {
     subtitle: "Gentle acoustic nasheed with softened warmth",
     defaultTrackUrl: "./assets/audio/nasheed.mp3",
     lowpassCutoffHz: 1100,
-    defaultVolume: 0.45,
+    defaultVolume: 0.65,
   },
 };

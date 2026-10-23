@@ -2,18 +2,14 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { WEDDING_CONFIG } from "../config/wedding.config";
 
 export function useAudioEngine() {
+  const defaultVol = WEDDING_CONFIG.audio.defaultVolume ?? 0.65;
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
-  const [volume, setVolumeState] = useState<number>(WEDDING_CONFIG.audio.defaultVolume ?? 0.5);
+  const [volume, setVolumeState] = useState<number>(defaultVol);
 
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const masterGainRef = useRef<GainNode | null>(null);
-  const filterNodeRef = useRef<BiquadFilterNode | null>(null);
   const htmlAudioRef = useRef<HTMLAudioElement | null>(null);
-  const mediaElementSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
-
   const isPlayingRef = useRef<boolean>(false);
-  const volumeRef = useRef<number>(WEDDING_CONFIG.audio.defaultVolume ?? 0.5);
+  const volumeRef = useRef<number>(defaultVol);
   const isMutedRef = useRef<boolean>(false);
   const wasPlayingBeforeTabHiddenRef = useRef<boolean>(false);
 
@@ -50,42 +46,7 @@ export function useAudioEngine() {
     }
   }, []);
 
-  // Setup Web Audio filter pipeline for the "Muffled" gentle effect
-  const setupWebAudioPipeline = useCallback((audio: HTMLAudioElement) => {
-    try {
-      if (audioContextRef.current && mediaElementSourceRef.current) {
-        return;
-      }
-      const AudioCtx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (!AudioCtx) return;
-
-      const ctx = new AudioCtx();
-      const masterGain = ctx.createGain();
-      masterGain.gain.setValueAtTime(isMutedRef.current ? 0 : volumeRef.current, ctx.currentTime);
-
-      // Lowpass Biquad Filter Node for "Muffled" / Softened warmth (1100-1200Hz)
-      const biquad = ctx.createBiquadFilter();
-      biquad.type = "lowpass";
-      biquad.frequency.setValueAtTime(WEDDING_CONFIG.audio.lowpassCutoffHz || 1200, ctx.currentTime);
-      biquad.Q.setValueAtTime(0.7, ctx.currentTime);
-
-      const source = ctx.createMediaElementSource(audio);
-      source.connect(biquad);
-      biquad.connect(masterGain);
-      masterGain.connect(ctx.destination);
-
-      audioContextRef.current = ctx;
-      masterGainRef.current = masterGain;
-      filterNodeRef.current = biquad;
-      mediaElementSourceRef.current = source;
-    } catch {
-      // Direct element playback fallback if Web Audio is restricted
-    }
-  }, []);
-
-  // Initialize single HTMLAudioElement
+  // Initialize single HTMLAudioElement directly connected to device speakers
   const getOrCreateAudio = useCallback(() => {
     if (!htmlAudioRef.current) {
       const audio = new Audio();
@@ -93,7 +54,7 @@ export function useAudioEngine() {
       audio.src = trackUrl;
       audio.loop = true;
       audio.preload = "auto";
-      audio.volume = isMutedRef.current ? 0 : volumeRef.current;
+      audio.volume = isMutedRef.current ? 0 : volumeRef.current; // 65% by default
 
       audio.addEventListener("ended", () => {
         audio.currentTime = 0;
@@ -110,20 +71,7 @@ export function useAudioEngine() {
     if (!audio) return false;
 
     try {
-      setupWebAudioPipeline(audio);
-      if (audioContextRef.current && audioContextRef.current.state === "suspended") {
-        await audioContextRef.current.resume().catch(() => {});
-      }
-
-      // Update volumes
-      if (masterGainRef.current && audioContextRef.current) {
-        masterGainRef.current.gain.setValueAtTime(
-          isMutedRef.current ? 0 : volumeRef.current,
-          audioContextRef.current.currentTime
-        );
-      }
       audio.volume = isMutedRef.current ? 0 : volumeRef.current;
-
       await audio.play();
       setIsPlaying(true);
       isPlayingRef.current = true;
@@ -133,7 +81,7 @@ export function useAudioEngine() {
       isPlayingRef.current = false;
       return false;
     }
-  }, [getOrCreateAudio, setupWebAudioPipeline]);
+  }, [getOrCreateAudio]);
 
   const pauseMusic = useCallback(() => {
     if (htmlAudioRef.current) {
@@ -156,14 +104,9 @@ export function useAudioEngine() {
     setIsMuted(nextMuted);
     isMutedRef.current = nextMuted;
 
-    if (masterGainRef.current && audioContextRef.current) {
-      masterGainRef.current.gain.setValueAtTime(
-        nextMuted ? 0 : volumeRef.current,
-        audioContextRef.current.currentTime
-      );
-    }
     if (htmlAudioRef.current) {
       htmlAudioRef.current.muted = nextMuted;
+      htmlAudioRef.current.volume = nextMuted ? 0 : volumeRef.current;
     }
   }, []);
 
@@ -172,48 +115,67 @@ export function useAudioEngine() {
     setVolumeState(clamped);
     volumeRef.current = clamped;
 
-    if (!isMutedRef.current && masterGainRef.current && audioContextRef.current) {
-      masterGainRef.current.gain.setValueAtTime(
-        clamped,
-        audioContextRef.current.currentTime
-      );
-    }
     if (htmlAudioRef.current && !isMutedRef.current) {
       htmlAudioRef.current.volume = clamped;
     }
   }, []);
 
-  // Autoplay on mount + Interaction fallback listener
+  // Immediate autoplay attempt on mount + Armed capture listeners for first interaction
   useEffect(() => {
     let unmounted = false;
 
     const attemptAutoplay = async () => {
+      // 1. Try immediate autoplay
+      const audio = getOrCreateAudio();
       try {
-        const success = await startMusic();
-        if (success && !unmounted) {
+        audio.volume = volumeRef.current;
+        await audio.play();
+        if (!unmounted) {
+          setIsPlaying(true);
+          isPlayingRef.current = true;
           return;
         }
-      } catch {}
+      } catch {
+        // Autoplay blocked by browser policy without gesture
+      }
 
-      // Autoplay blocked by browser policy: register fallback user interaction listeners
+      // 2. Register capture listeners on window and document for instant gesture unlock
       const handleUserGesture = async () => {
-        if (!isPlayingRef.current && !unmounted) {
-          await startMusic();
-        }
-        removeInteractionListeners();
+        cleanupInteractionListeners();
+        if (isPlayingRef.current || unmounted) return;
+        try {
+          const a = getOrCreateAudio();
+          a.volume = isMutedRef.current ? 0 : volumeRef.current;
+          await a.play();
+          if (!unmounted) {
+            setIsPlaying(true);
+            isPlayingRef.current = true;
+          }
+        } catch {}
       };
 
-      const removeInteractionListeners = () => {
-        window.removeEventListener("pointerdown", handleUserGesture);
-        window.removeEventListener("keydown", handleUserGesture);
-        window.removeEventListener("touchstart", handleUserGesture);
-        window.removeEventListener("click", handleUserGesture);
+      const events = [
+        "pointerdown",
+        "touchstart",
+        "touchend",
+        "mousedown",
+        "click",
+        "scroll",
+        "wheel",
+        "keydown",
+      ];
+
+      const cleanupInteractionListeners = () => {
+        events.forEach((evt) => {
+          window.removeEventListener(evt, handleUserGesture, true);
+          document.removeEventListener(evt, handleUserGesture, true);
+        });
       };
 
-      window.addEventListener("pointerdown", handleUserGesture, { once: true });
-      window.addEventListener("keydown", handleUserGesture, { once: true });
-      window.addEventListener("touchstart", handleUserGesture, { once: true });
-      window.addEventListener("click", handleUserGesture, { once: true });
+      events.forEach((evt) => {
+        window.addEventListener(evt, handleUserGesture, { capture: true, passive: true });
+        document.addEventListener(evt, handleUserGesture, { capture: true, passive: true });
+      });
     };
 
     attemptAutoplay();
@@ -221,7 +183,7 @@ export function useAudioEngine() {
     return () => {
       unmounted = true;
     };
-  }, [startMusic]);
+  }, [getOrCreateAudio]);
 
   // Tab switch & visibility change handler
   useEffect(() => {
@@ -240,9 +202,17 @@ export function useAudioEngine() {
         // User returned to tab
         if (wasPlayingBeforeTabHiddenRef.current) {
           wasPlayingBeforeTabHiddenRef.current = false;
-          startMusic().catch(() => {
-            setIsPlaying(false);
-          });
+          if (htmlAudioRef.current) {
+            htmlAudioRef.current
+              .play()
+              .then(() => {
+                setIsPlaying(true);
+                isPlayingRef.current = true;
+              })
+              .catch(() => {
+                setIsPlaying(false);
+              });
+          }
         }
       }
     };
@@ -251,7 +221,7 @@ export function useAudioEngine() {
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [startMusic]);
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -259,9 +229,6 @@ export function useAudioEngine() {
       if (htmlAudioRef.current) {
         htmlAudioRef.current.pause();
         htmlAudioRef.current.src = "";
-      }
-      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
-        audioContextRef.current.close().catch(() => {});
       }
     };
   }, []);
