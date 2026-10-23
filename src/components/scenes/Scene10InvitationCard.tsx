@@ -7,7 +7,6 @@ import { BackgroundMonogram } from "../common/BackgroundMonogram";
 import { CountdownTimer } from "../finale/CountdownTimer";
 import { ActionButtons } from "../finale/ActionButtons";
 import { AudioPlayerCard } from "../common/AudioPlayer";
-import { Footer } from "../finale/Footer";
 
 interface Scene10InvitationCardProps {
   isPlaying: boolean;
@@ -202,7 +201,7 @@ export const Scene10InvitationCard: React.FC<Scene10InvitationCardProps> = ({
           {/* Live Countdown */}
           <div className="mt-6 w-full">
             <p className="font-['Cinzel'] text-[10px] tracking-widest text-[#C9A66B] uppercase mb-2">
-              Countdown to the Blessed Nikah
+              Countdown to the Blessed Reception
             </p>
             <CountdownTimer />
           </div>
@@ -356,9 +355,6 @@ export const Scene10InvitationCard: React.FC<Scene10InvitationCardProps> = ({
           </div>
         </div>
       )}
-
-      {/* Tasteful Footer with Muhammad Sinan KK WhatsApp Contact */}
-      <Footer />
     </section>
   );
 };
