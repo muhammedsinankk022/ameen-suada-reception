@@ -29,6 +29,27 @@ export function useAudioEngine() {
     isMutedRef.current = isMuted;
   }, [isMuted]);
 
+  // Robust absolute track URL resolver (works across GitHub Pages, localhost, and custom domains)
+  const getResolvedAudioUrl = useCallback(() => {
+    try {
+      const rawUrl = WEDDING_CONFIG.audio.defaultTrackUrl || "assets/audio/nasheed.mp3";
+      if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) {
+        return rawUrl;
+      }
+      const cleanPath = rawUrl.replace(/^\.\//, "");
+      const base = document.baseURI || window.location.href;
+      let normalized = base;
+      if (!normalized.endsWith("/") && !normalized.split("/").pop()?.includes(".")) {
+        normalized += "/";
+      } else if (!normalized.endsWith("/")) {
+        normalized = normalized.substring(0, normalized.lastIndexOf("/") + 1);
+      }
+      return new URL(cleanPath, normalized).href;
+    } catch {
+      return WEDDING_CONFIG.audio.defaultTrackUrl;
+    }
+  }, []);
+
   // Setup Web Audio filter pipeline for the "Muffled" gentle effect
   const setupWebAudioPipeline = useCallback((audio: HTMLAudioElement) => {
     try {
@@ -44,7 +65,7 @@ export function useAudioEngine() {
       const masterGain = ctx.createGain();
       masterGain.gain.setValueAtTime(isMutedRef.current ? 0 : volumeRef.current, ctx.currentTime);
 
-      // Lowpass Biquad Filter Node for "Muffled" / Softened warmth
+      // Lowpass Biquad Filter Node for "Muffled" / Softened warmth (1100-1200Hz)
       const biquad = ctx.createBiquadFilter();
       biquad.type = "lowpass";
       biquad.frequency.setValueAtTime(WEDDING_CONFIG.audio.lowpassCutoffHz || 1200, ctx.currentTime);
@@ -68,11 +89,11 @@ export function useAudioEngine() {
   const getOrCreateAudio = useCallback(() => {
     if (!htmlAudioRef.current) {
       const audio = new Audio();
-      audio.src = WEDDING_CONFIG.audio.defaultTrackUrl;
+      const trackUrl = getResolvedAudioUrl();
+      audio.src = trackUrl;
       audio.loop = true;
       audio.preload = "auto";
       audio.volume = isMutedRef.current ? 0 : volumeRef.current;
-      audio.crossOrigin = "anonymous";
 
       audio.addEventListener("ended", () => {
         audio.currentTime = 0;
@@ -82,7 +103,7 @@ export function useAudioEngine() {
       htmlAudioRef.current = audio;
     }
     return htmlAudioRef.current;
-  }, []);
+  }, [getResolvedAudioUrl]);
 
   const startMusic = useCallback(async () => {
     const audio = getOrCreateAudio();
