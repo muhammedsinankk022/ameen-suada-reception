@@ -5,6 +5,7 @@ import { ProgressBar } from "./components/navigation/ProgressBar";
 import { TopNav } from "./components/navigation/TopNav";
 import { Scene2GuestArrival } from "./components/scenes/Scene2GuestArrival";
 import { Scene5BrideAndGroom } from "./components/scenes/Scene5BrideAndGroom";
+import { Scene10InvitationCard } from "./components/scenes/Scene10InvitationCard";
 import { Footer } from "./components/finale/Footer";
 import { useAudioEngine } from "./hooks/useAudioEngine";
 import { useScrollJourney } from "./hooks/useScrollJourney";
@@ -50,13 +51,19 @@ export function App() {
         onVolumeChange={setVolume}
       />
 
-      {/* Main Wedding Invitation: Two Visual Sections Only */}
+      {/* Main Wedding Invitation */}
       <main className="relative w-full">
         {/* Section 1 — Mosque (Reception Gathering) */}
         <Scene2GuestArrival onScrollToNext={() => jumpToScene("scene-characters")} />
 
         {/* Section 2 — Wedding Characters (Ameen & Suada) */}
-        <Scene5BrideAndGroom />
+        <Scene5BrideAndGroom onScrollToNext={() => jumpToScene("scene-10")} />
+
+        {/* Section 3 — Save the Date Invitation Card */}
+        <Scene10InvitationCard
+          isPlaying={isPlaying}
+          onToggleMusic={toggleMusic}
+        />
       </main>
 
       {/* Footer */}

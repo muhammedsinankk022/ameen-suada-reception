@@ -11,13 +11,11 @@ import { AudioPlayerCard } from "../common/AudioPlayer";
 interface Scene10InvitationCardProps {
   isPlaying: boolean;
   onToggleMusic: () => void;
-  onOpenGuestMemories: () => void;
 }
 
 export const Scene10InvitationCard: React.FC<Scene10InvitationCardProps> = ({
   isPlaying,
   onToggleMusic,
-  onOpenGuestMemories,
 }) => {
   // Precious moments real image upload state
   const [preciousPhoto, setPreciousPhoto] = useState<string | null>(null);
@@ -275,54 +273,6 @@ export const Scene10InvitationCard: React.FC<Scene10InvitationCardProps> = ({
           {/* Audio Player Card (Matching reference design) */}
           <div className="mt-5 w-full">
             <AudioPlayerCard isPlaying={isPlaying} onToggle={onToggleMusic} />
-          </div>
-
-          {/* Guest Memories Quick Ribbon */}
-          <div className="mt-6 w-full pt-5 border-t border-[#EAD6BD]/60">
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-left">
-                <p className="font-['Cinzel'] text-xs font-bold text-[#4B342E]">
-                  Guest Memories
-                </p>
-                <p className="font-['Montserrat'] text-[10px] text-[#6B524B]">
-                  Share your special moments with us
-                </p>
-              </div>
-              <button
-                onClick={onOpenGuestMemories}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#A65368] text-white text-[11px] font-['Cinzel'] shadow-xs hover:bg-[#8E4356] transition-colors"
-              >
-                <Camera className="w-3 h-3" />
-                <span>Upload Photos</span>
-              </button>
-            </div>
-
-            {/* 4 Photo preview strip matching reference image */}
-            <div
-              onClick={onOpenGuestMemories}
-              className="grid grid-cols-4 gap-2 cursor-pointer group"
-            >
-              <img
-                src="./assets/images/scene_auditorium.jpg"
-                alt="Auditorium"
-                className="aspect-square object-cover rounded-xl border border-[#C9A66B]/40 group-hover:opacity-90 transition-opacity"
-              />
-              <img
-                src="./assets/images/scene_rings.jpg"
-                alt="Rings"
-                className="aspect-square object-cover rounded-xl border border-[#C9A66B]/40 group-hover:opacity-90 transition-opacity"
-              />
-              <img
-                src="./assets/images/scene_mosque_v2.jpg"
-                alt="Mosque"
-                className="aspect-square object-cover rounded-xl border border-[#C9A66B]/40 group-hover:opacity-90 transition-opacity"
-              />
-              <img
-                src="./assets/images/scene_family_photo_v2.jpg"
-                alt="Family"
-                className="aspect-square object-cover rounded-xl border border-[#C9A66B]/40 group-hover:opacity-90 transition-opacity"
-              />
-            </div>
           </div>
         </div>
       </div>

@@ -22,6 +22,7 @@ export const TopNav: React.FC<TopNavProps> = ({
   const scenes = [
     { id: "scene-mosque", title: "1. Reception & Mosque Gathering" },
     { id: "scene-characters", title: "2. The Groom & Bride" },
+    { id: "scene-10", title: "3. Save the Date Invitation" },
   ];
 
   const handleNavClick = (id: string) => {

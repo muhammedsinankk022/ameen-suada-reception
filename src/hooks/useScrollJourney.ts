@@ -14,6 +14,7 @@ export function useScrollJourney(reducedMotion: boolean = false) {
     const sceneIds = [
       "scene-mosque",
       "scene-characters",
+      "scene-10",
     ];
 
     const triggers: ScrollTrigger[] = [];

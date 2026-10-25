@@ -1,14 +1,17 @@
 import React from "react";
+import { ChevronDown } from "lucide-react";
 import { BackgroundMonogram } from "../common/BackgroundMonogram";
 import { BrassLantern } from "../common/BrassLantern";
-import { ActionButtons } from "../finale/ActionButtons";
-import { WEDDING_CONFIG } from "../../config/wedding.config";
 
-export const Scene5BrideAndGroom: React.FC = () => {
+interface Scene5BrideAndGroomProps {
+  onScrollToNext?: () => void;
+}
+
+export const Scene5BrideAndGroom: React.FC<Scene5BrideAndGroomProps> = ({ onScrollToNext }) => {
   return (
     <section
       id="scene-characters"
-      className="relative min-h-screen w-full flex flex-col items-center justify-center py-20 px-4 bg-gradient-to-b from-[#FFF8F1] via-[#FAF0F2] to-[#FFF8F1] overflow-hidden text-center"
+      className="relative min-h-screen w-full flex flex-col items-center justify-between py-20 px-4 bg-gradient-to-b from-[#FFF8F1] via-[#FAF0F2] to-[#FFF8F1] overflow-hidden text-center"
     >
       {/* Hanging Brass Lanterns */}
       <div className="absolute top-0 left-6 sm:left-14 z-10 hidden sm:block">
@@ -23,7 +26,7 @@ export const Scene5BrideAndGroom: React.FC = () => {
         <BackgroundMonogram size="hero" subtle />
       </div>
 
-      <div className="w-full max-w-4xl mx-auto flex flex-col items-center z-10">
+      <div className="w-full max-w-4xl mx-auto flex flex-col items-center z-10 my-auto">
         {/* Monogram Emblem */}
         <div className="mb-2">
           <BackgroundMonogram size="sm" subtle />
@@ -31,7 +34,7 @@ export const Scene5BrideAndGroom: React.FC = () => {
 
         {/* Couple Names Header */}
         <div className="my-2">
-          <h2 className="font-['Cinzel'] text-2xl sm:text-4xl font-bold text-[#A65368] tracking-widest flex items-center justify-center gap-2">
+          <h2 className="font-['Cinzel'] text-2xl sm:text-4xl lg:text-5xl font-bold text-[#A65368] tracking-widest flex items-center justify-center gap-2">
             <span>Ameen</span>
             <span className="text-[#C9A66B] text-[0.8em] animate-pulse">♥</span>
             <span>Suada</span>
@@ -44,7 +47,7 @@ export const Scene5BrideAndGroom: React.FC = () => {
         </h3>
 
         {/* Romantic Caption */}
-        <p className="font-['Cormorant_Garamond'] italic text-base sm:text-xl text-[#A65368] max-w-lg mb-6 leading-relaxed font-medium">
+        <p className="font-['Cormorant_Garamond'] italic text-base sm:text-xl text-[#A65368] max-w-lg mb-8 leading-relaxed font-medium">
           "A new chapter. A lifetime of togetherness."
         </p>
 
@@ -69,28 +72,20 @@ export const Scene5BrideAndGroom: React.FC = () => {
           </div>
         </div>
 
-        {/* Family Lineage Box */}
-        <div className="mt-8 space-y-1.5 text-center py-3.5 px-6 rounded-2xl bg-white/70 backdrop-blur-xs border border-[#EAD6BD]/70 w-full max-w-md shadow-xs">
-          <p className="font-['Cinzel'] text-xs sm:text-sm font-semibold text-[#4B342E] tracking-wide">
-            {WEDDING_CONFIG.groom.familyLine}
-          </p>
-          <div className="w-12 h-[1px] bg-[#C9A66B]/40 mx-auto" />
-          <p className="font-['Cinzel'] text-xs sm:text-sm font-semibold text-[#4B342E] tracking-wide">
-            {WEDDING_CONFIG.bride.familyLine}
-          </p>
-        </div>
-
-        {/* Closing Blessings Message */}
-        <div className="mt-5 px-4 py-2.5 rounded-xl bg-[#FAF0F2]/70 border border-[#EAD6BD]/50 max-w-md">
-          <p className="font-['Cormorant_Garamond'] italic text-base sm:text-lg text-[#A65368] font-semibold leading-relaxed">
-            "Your presence and duas will make this occasion even more special."
-          </p>
-        </div>
-
-        {/* Action Buttons: Add to Calendar, Venue Map, Share Invitation */}
-        <div className="mt-6 w-full max-w-md">
-          <ActionButtons />
-        </div>
+        {/* Scroll Guide to Section 3: Save the Date Invitation */}
+        {onScrollToNext && (
+          <button
+            type="button"
+            onClick={onScrollToNext}
+            aria-label="Scroll to Save the Date Invitation Card"
+            className="mt-8 inline-flex flex-col items-center gap-1 text-[#6B524B] opacity-80 hover:opacity-100 transition-opacity cursor-pointer group"
+          >
+            <span className="font-['Montserrat'] text-[10px] tracking-widest uppercase font-medium">
+              Save the Date Invitation
+            </span>
+            <ChevronDown className="w-4 h-4 text-[#A65368] animate-bounce" />
+          </button>
+        )}
       </div>
     </section>
   );
